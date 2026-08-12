@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package genai.options.v1;
+package convertgen.options.v1;
 
 option go_package = "github.com/cogitatorum/convertgen/options/v1;optionsv1";
 
@@ -8,8 +8,6 @@ import "google/protobuf/descriptor.proto";
 
 // Field options for fail-closed convertgen policy hints.
 // Mapping still requires an explicit convert.yaml entry; options refine behavior.
-//
-// Consumers should copy this file (or depend on it) and use the same field numbers.
 extend google.protobuf.FieldOptions {
   bool skip = 75000;
   string go_name = 75001;
