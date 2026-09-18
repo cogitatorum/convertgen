@@ -43,7 +43,7 @@ type msgPolicy struct {
 type fieldPolicy struct {
 	Field   string `yaml:"field"`
 	Get     string `yaml:"get"`
-	Convert string `yaml:"convert"` // uuid_string | error_string | bytes_copy | raw_json_ptr
+	Convert string `yaml:"convert"` // uuid_string | error_string | bytes_copy | raw_json_ptr | value_json_ptr
 }
 
 type fieldMap map[string]fieldPolicy

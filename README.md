@@ -39,6 +39,7 @@ Consumers should import that file (or keep a copy with the same package name and
 | Scalar / nested / repeated fields | yes |
 | Oneofs | yes (`oneofs`) |
 | `bytes` ↔ `*json.RawMessage` | yes (`convert: raw_json_ptr`) |
+| `google.protobuf.Value` ↔ `*json.RawMessage` | yes (`convert: value_json_ptr`) |
 | Pointer domain types | yes (`pointer: true`) |
 | Getters (ToProto) | yes (`get: Status`) |
 | `uuid.UUID` → string | yes (`convert: uuid_string`) |

@@ -363,6 +363,15 @@ func buildOneofCase(cfg Config, protoAlias, msgName, fname string, fd protorefle
 		return cm, fmt.Sprintf("message %s oneof case %s: enum in oneof not supported yet", msgName, fname)
 	case protoreflect.MessageKind:
 		msgType := string(fd.Message().Name())
+		full := string(fd.Message().FullName())
+		if pol.Convert == "value_json_ptr" {
+			if full != "google.protobuf.Value" {
+				return cm, fmt.Sprintf("message %s oneof case %s: value_json_ptr requires google.protobuf.Value, got %s", msgName, fname, full)
+			}
+			cm.Kind = kindMessage
+			cm.Convert = "value_json_ptr"
+			return cm, ""
+		}
 		if _, ok := cfg.Messages[msgType]; !ok {
 			return cm, fmt.Sprintf("message %s oneof case %s: nested message %s not in policy.messages", msgName, fname, msgType)
 		}

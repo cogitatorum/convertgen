@@ -82,7 +82,7 @@ func writeEnum(b *strings.Builder, e enumModel) {
 		fmt.Fprintf(b, "\tcase %s:\n\t\treturn %s, nil\n", v.ProtoIdent, v.DomainIdent)
 	}
 	fmt.Fprintf(b, "\tdefault:\n\t\treturn %s, fmt.Errorf(%q, v)\n\t}\n}\n",
-		e.ZeroDomain, e.Name+": unsupported proto value %v")
+		e.ZeroDomain, "unsupported proto value %v for "+e.Name)
 }
 
 func writeMessage(b *strings.Builder, m msgModel) {
@@ -214,6 +214,8 @@ func writeOneofWrapperValue(b *strings.Builder, c oneofCaseModel, domainExpr str
 	switch {
 	case c.Convert == "raw_json_ptr":
 		fmt.Fprintf(b, "%s: append([]byte(nil), (*%s)...)", c.WrapperField, domainExpr)
+	case c.Convert == "value_json_ptr":
+		fmt.Fprintf(b, "%s: valueJSONPtrToProto(%s)", c.WrapperField, domainExpr)
 	case c.Kind == kindMessage:
 		fmt.Fprintf(b, "%s: %sToProto(*%s)", c.WrapperField, c.MessageFunc, domainExpr)
 	default:
@@ -225,13 +227,13 @@ func writeMessageFromProto(b *strings.Builder, m msgModel) {
 	fmt.Fprintf(b, "\nfunc %sFromProto(in *%s) (%s, error) {\n", m.Name, m.ProtoIdent, m.DomainIdent)
 	if m.Pointer {
 		b.WriteString("\tif in == nil {\n")
-		fmt.Fprintf(b, "\t\treturn nil, fmt.Errorf(%q)\n", m.Name+": nil")
+		fmt.Fprintf(b, "\t\treturn nil, fmt.Errorf(%q)\n", "nil "+m.Name)
 		b.WriteString("\t}\n")
 		fmt.Fprintf(b, "\tout := &%s{}\n", m.DomainBase)
 	} else {
 		b.WriteString("\tvar out " + m.DomainIdent + "\n")
 		b.WriteString("\tif in == nil {\n")
-		fmt.Fprintf(b, "\t\treturn out, fmt.Errorf(%q)\n", m.Name+": nil")
+		fmt.Fprintf(b, "\t\treturn out, fmt.Errorf(%q)\n", "nil "+m.Name)
 		b.WriteString("\t}\n")
 	}
 
@@ -248,7 +250,7 @@ func writeMessageFromProto(b *strings.Builder, m msgModel) {
 			fmt.Fprintf(b, "\tcase *%s:\n", c.WrapperType)
 			writeOneofFromProtoCase(b, c)
 		}
-		fmt.Fprintf(b, "\tdefault:\n\t\treturn out, fmt.Errorf(%q)\n", m.Name+": "+o.Name+" is required")
+		fmt.Fprintf(b, "\tdefault:\n\t\treturn out, fmt.Errorf(%q)\n", o.Name+" is required for "+m.Name)
 		b.WriteString("\t}\n")
 	}
 
@@ -282,6 +284,10 @@ func writeOneofFromProtoCase(b *strings.Builder, c oneofCaseModel) {
 	switch {
 	case c.Convert == "raw_json_ptr":
 		fmt.Fprintf(b, "\t\traw := json.RawMessage(append([]byte(nil), o.%s...))\n", c.WrapperField)
+		fmt.Fprintf(b, "\t\tout.%s = &raw\n", c.DomainField)
+	case c.Convert == "value_json_ptr":
+		fmt.Fprintf(b, "\t\traw, err := valueJSONPtrFromProto(o.%s)\n", c.WrapperField)
+		b.WriteString("\t\tif err != nil {\n\t\t\treturn out, err\n\t\t}\n")
 		fmt.Fprintf(b, "\t\tout.%s = &raw\n", c.DomainField)
 	case c.Kind == kindMessage:
 		fmt.Fprintf(b, "\t\tv, err := %sFromProto(o.%s)\n", c.MessageFunc, c.WrapperField)
